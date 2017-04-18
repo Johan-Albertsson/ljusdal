@@ -1,0 +1,133 @@
+#set ($utils = $request.getAttribute('sitevision.utils'))
+#set ($pu = $utils.propertyUtil)
+#set ($rsLocator = $utils.getResourceLocatorUtil())
+#set ($ni = $utils.getNodeIteratorUtil())
+#set ($linkRenderer = $utils.linkRenderer)
+
+<a href="#" class="js-menu paw-header__link inverted text-center" aria-haspopup="true"><i class="fa fa-bars" aria-hidden="true"></i> Meny</a>
+<div id="nav-overlay"></div>
+<div id="menu-offset" class="mobile-menu-wrapper" aria-hidden="true">
+    <a href="#" class="closebtn" aria-label="Stäng menyn">&times;</a>
+    <div class="mobile-menu"></div>
+   <ul class="globallinks">
+      #set ($globalFolder = $rsLocator.getNodeByIdentifier("19.3b21333511ebaff1d17800016512"))
+      #set ($globalLinks = $ni.getMenuItems($globalFolder))
+      #foreach ($globalLink in $globalLinks)
+         <li>
+            $linkRenderer.update($globalLink)
+            $linkRenderer.render()
+         </li>
+      #end
+   </ul>
+</div>
+
+<script type="text/javascript">
+$svjq( document ).ready(function() {
+   
+   // Visar menyn och tonar ut bakgrund  
+   $svjq(".js-menu").on("click", function(){
+     $svjq(".mobile-menu-wrapper, #nav-overlay").addClass('in').attr('aria-hidden', 'false');
+     $svjq('li.selected .load-ul').attr('aria-label', 'Stäng undermenyn');
+   });
+   
+    // Sätter rätt aria-label för utfälld meny vid sidladdning
+    //$svjq('li.selected .load-ul .fa-minus').attr('aria-label', 'Stäng undermenyn');
+
+   // Stänger menyn
+   function closeMobileMenu() {
+      $svjq(".mobile-menu-wrapper, #nav-overlay").removeClass('in').attr('aria-hidden', 'true');
+   }
+
+   $svjq(".closebtn, #nav-overlay").on("click", function(){
+      closeMobileMenu();
+   });
+
+   $(document).keyup(function(e) {
+      if (e.keyCode == 27 && $('.mobile-menu').is(":visible")) { // escape key maps to keycode `27`
+         closeMobileMenu();
+      }
+   });
+
+   
+    // Funktion för att ladda undersidor till en menynod
+    function getTreeForId(target, id) {
+        var ajaxAdress = "/4.42f7355115a8eed6e66391d7/12.42f7355115a8eed6e6639203.xml?startid=" + id;
+        jQuery.ajax({
+            type: "GET",
+            url: ajaxAdress,
+            dataType: "html"
+        })
+        .done(function(data) {
+            target.parent().append(data);
+            target.parent().find('ul').first().hide();
+            target.parent().find('ul').first().slideToggle('fast');
+        })
+    }
+
+    // Fyller mobilmenyn
+    var target = $svjq('.mobile-menu');
+    target.html("");
+
+    // Koppierar ingångarna
+    var roletabs = $svjq('#roleTabMenu ul').clone();
+    roletabs.find('li').each(function() {
+        $svjq(this).append("<a href='#' class='load-ul'><i class='fa fa-plus'></i></a>");
+    });
+
+    // Kopierar undertabbar    
+    var tabs = $svjq('#mainTabMenu ul').clone();
+    tabs.find('li').each(function() {
+        $svjq(this).append("<a href='#' class='load-ul'><i class='fa fa-plus'></i></a>");
+    });
+
+    // Kopierar vänstermenyn
+    var leftMenu = $svjq('#navigation>ul').clone();
+    leftMenu.find('.left-menu__item--has-children>a').each(function() {
+        $svjq(this).after("<a href='#' class='load-ul'><i class='fa fa-plus'></i></a>");
+    });
+
+    tabs.find('li.selected').append(leftMenu);
+    roletabs.find('li.selected').append(tabs);
+    target.html(roletabs);
+
+   // Klick på plus och minus
+    $svjq('.mobile-menu-wrapper').on("click", ".load-ul", function(e) {
+        e.preventDefault();
+        var me = $svjq(this);
+        var myid = me.closest("li").data("myid");
+       
+        // Hanterar plus och minus-ikon
+        if(me.find('i').hasClass('fa-minus')) {
+            me.find('i').removeClass('fa-minus').addClass('fa-plus');
+            me.attr('aria-label', 'Öppna undermenyn');
+        }
+        else if(me.find('i').hasClass('fa-plus')) {
+            me.find('i').addClass('fa-minus').removeClass('fa-plus');
+            me.attr('aria-label', 'Stäng undermenyn');
+        }
+
+         // Öppna
+        if( me.parent().find('ul').length == 0) {
+           if(!me.hasClass("get-data")) {
+               getTreeForId(me, myid);
+               me.addClass("get-data");
+           }
+        }
+        else {
+           // Stäng
+           me.parent().find('>ul').slideToggle('fast', function() {
+             me.removeClass("get-data");
+           });
+        }
+    });
+
+    // Sätter rätt ikon vid sidladdning
+    // Nivå 1
+    $svjq('.mobile-menu>ul>li.selected>.load-ul>i').addClass('fa-minus').removeClass('fa-plus');
+    // Nivå 2
+    $svjq('.flikmenySelected>.load-ul>i').addClass('fa-minus').removeClass('fa-plus');
+    //Nivå 3
+    $svjq('.left-menu__item--selected>.load-ul>i').addClass('fa-minus').removeClass('fa-plus');
+});
+
+</script>
