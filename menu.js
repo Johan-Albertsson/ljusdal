@@ -16,6 +16,6 @@ $svjq( document ).ready(function() {
             me.attr('aria-label', 'Stäng undermenyn');
         }
          me.parent().find('>ul').slideToggle('fast', function() {
-        }
+        });
     });
 });
